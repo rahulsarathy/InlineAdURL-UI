@@ -1,0 +1,26 @@
+
+
+.macro-header {
+  display: inline-block;
+}
+
+
+.macro-input {
+  margin-right: 20px;
+  display: inline-block;
+}
+
+.Url-box{
+  margin-right: 10px;
+  display: inline-block;
+}
+
+.flight-button {
+  display: block;
+  padding: 10px;
+  margin: 5px;
+}
+
+.buttons {
+  display: inline-block;
+}
