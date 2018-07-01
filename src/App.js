@@ -14,7 +14,9 @@ class App extends Component {
     this.state = {
       mainTextInputValue: "",
       macros: [],
-      inputValues: {}
+      inputValues: {},
+      allMatches: [],
+      url: ""
     };
   }
 
@@ -28,20 +30,45 @@ getInput(macro)
 }
 
 handleTextAreaChange(event){
-  //find macros for every text event change
-
-  this.findMacros(event.target.value);
-  //this.createURLArray(event.target.value);
-  this.createMacroInputs();
-  this.setState(
-    {
-      mainTextInputValue: event.target.value,
-    });
-
+  this.setState({
+    mainTextInputValue: event.target.value
+  }, 
+  () => {
+    this.findMacros();
+  });
 }
 
+createURLArray()
+{
+  var url = this.state.mainTextInputValue;
+  var macro_indices = {};
+  var split_url = [];
+  var myRegexp = /{\w+}/g;
+  var allMatches = this.state.allMatches;
+  var final_array = [];
 
-findMacros(url){
+  split_url = url.split(myRegexp);
+
+  for (var i = 0; i< split_url.length; i++)
+  {
+    if (allMatches[i] !== undefined)
+    {
+      final_array.push(split_url[i], allMatches[i]);
+    }
+    else 
+    {
+      final_array.push(split_url[i]);
+    }
+  }
+
+  this.setState(
+    {
+      url: final_array.join("")
+    });
+}
+
+findMacros(){
+  var url = this.state.mainTextInputValue;
   var myRegexp = /{(\w+)}/g,
   macros = [],
   allMatches = [],
@@ -57,8 +84,11 @@ findMacros(url){
   {
     allMatches: allMatches,
     macros: macros
-  }
-  );
+  }, 
+  () => {
+    this.createURLArray();
+    this.createMacroInputs();
+  });
 }
 
 createMacroInputs(){
@@ -92,7 +122,7 @@ handleMacroChange(macro, event)
         <h1>
           URL: 
         </h1>
-        <a href={this.state.mainTextInputValue}>{this.state.mainTextInputValue}</a>
+        <a href={this.state.url}>{this.state.url}</a>
       </div>
       <div>
         <div>
