@@ -44,6 +44,7 @@ createURLArray()
   var macro_indices = {};
   var split_url = [];
   var myRegexp = /{\w+}/g;
+  var macros = this.state.macros;
   var allMatches = this.state.allMatches;
   var final_array = [];
 
@@ -61,9 +62,14 @@ createURLArray()
     }
   }
 
+  for (i = 0; i < macros.length; i++){
+    macro_indices[macros[i]] = this.getAllIndices(final_array, '{' + macros[i] + '}');
+  }
+
   this.setState(
     {
-      url: final_array.join("")
+      url: final_array.join(""),
+      macro_indices: macro_indices
     });
 }
 
@@ -93,7 +99,6 @@ findMacros(){
 
 createMacroInputs(){
   var macros = this.state.macros;
-  console.log(macros);
 
   const macroTitles = macros.map((macro) => 
     <Macro onChange={(e) => this.handleMacroChange(macro, e)} value={this.state.inputValues[macro]} macro={macro} key={macro}/>
@@ -112,6 +117,15 @@ handleMacroChange(macro, event)
   this.setState({
     inputValues: inputValues
   });
+}
+
+getAllIndices(arr, val) {
+    var indexes = [], i = -1;
+    var proper_val = val;
+    while ((i = arr.indexOf(proper_val, i+1)) !== -1){
+      indexes.push(i);
+    }
+    return indexes;
 }
 
   render() {
