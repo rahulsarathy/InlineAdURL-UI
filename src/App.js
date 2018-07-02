@@ -8,16 +8,37 @@ class App extends Component {
   constructor(){
     super();
 
-    this.handleTextAreaChange = this.handleTextAreaChange.bind(this);
-    this.createMacroInputs = this.createMacroInputs.bind(this);
+    var defaults = {
+      departure_date_year_month_day: "2018/08/20",
+      return_date_year_month_day: "2018/08/20",
+      departure_date_month_day_year: "08/20/2018",
+      return_date_month_day_year: "08/20/2018",
+      origin: "SFO",
+      destination: "LAX",
+      number_of_tickets_no_children: "1",
+      children: "0",
+      infants_in_seat: "0",
+      infants_in_lap: "0",
+      number_of_tickets: "1",
+      "class": "economy",
+      "infant_in_lap_yn": 'N',
+      "bid": "B380595",
+      "sid": "S528"
+    }
 
     this.state = {
+      defaults: defaults,
       mainTextInputValue: "",
       macros: [],
       inputValues: {},
       allMatches: [],
+      urlArray: [],
       url: ""
     };
+
+    //this.getDefault = this.getDefault.bind(this);
+    this.handleTextAreaChange = this.handleTextAreaChange.bind(this);
+    this.createMacroInputs = this.createMacroInputs.bind(this);
   }
 
 getInput(macro)
@@ -41,35 +62,36 @@ handleTextAreaChange(event){
 createURLArray()
 {
   var url = this.state.mainTextInputValue;
-  var macro_indices = {};
-  var split_url = [];
+  var macroIndices = {};
+  var splitURL = [];
   var myRegexp = /{\w+}/g;
   var macros = this.state.macros;
   var allMatches = this.state.allMatches;
-  var final_array = [];
+  var urlArray = [];
 
-  split_url = url.split(myRegexp);
+  splitURL = url.split(myRegexp);
 
-  for (var i = 0; i< split_url.length; i++)
+  for (var i = 0; i< splitURL.length; i++)
   {
     if (allMatches[i] !== undefined)
     {
-      final_array.push(split_url[i], allMatches[i]);
+      urlArray.push(splitURL[i], allMatches[i]);
     }
     else 
     {
-      final_array.push(split_url[i]);
+      urlArray.push(splitURL[i]);
     }
   }
 
   for (i = 0; i < macros.length; i++){
-    macro_indices[macros[i]] = this.getAllIndices(final_array, '{' + macros[i] + '}');
+    macroIndices[macros[i]] = this.getAllIndices(urlArray, '{' + macros[i] + '}');
   }
 
   this.setState(
     {
-      url: final_array.join(""),
-      macro_indices: macro_indices
+      urlArray: urlArray,
+      url: urlArray.join(""),
+      macroIndices: macroIndices
     });
 }
 
@@ -80,7 +102,7 @@ findMacros(){
   allMatches = [],
   match;
 
-  while (match = myRegexp.exec(url))
+  while ((match = myRegexp.exec(url)) !== null)
   {
     allMatches.push(match[0]);
     if (!macros.includes(match[1]))
@@ -101,12 +123,26 @@ createMacroInputs(){
   var macros = this.state.macros;
 
   const macroTitles = macros.map((macro) => 
-    <Macro onChange={(e) => this.handleMacroChange(macro, e)} value={this.state.inputValues[macro]} macro={macro} key={macro}/>
+    <Macro onChange={(e) => this.handleMacroChange(macro, e)} onClick={() => this.getDefault(macro)} value={this.state.inputValues[macro]} macro={macro} key={macro}/>
   );
 
   this.setState(
     {
       macroTitles: macroTitles
+    });
+}
+
+getDefault(macro){
+  var inputValues = this.state.inputValues;
+  var defaults = this.state.defaults;
+  inputValues[macro] = defaults[macro];
+  this.setState(
+    {
+      inputValues: inputValues
+    }, 
+    () =>
+    {
+      this.replaceURLOnChange(macro);
     });
 }
 
@@ -116,7 +152,34 @@ handleMacroChange(macro, event)
   inputValues[macro] = event.target.value;
   this.setState({
     inputValues: inputValues
-  });
+  },
+  () => {
+    this.replaceURLOnChange(macro);
+  }
+  );
+}
+
+replaceURLOnChange(macro)
+{
+  var inputValues = this.state.inputValues;
+  var macroIndices = this.state.macroIndices;
+  var urlArray = this.state.urlArray;
+  var replacement = inputValues[macro];
+
+
+  var macroIndexArray = macroIndices[macro];
+
+  for (var i = 0; i < macroIndexArray.length; i++)
+  {
+    var index = macroIndexArray[i];
+    urlArray[index] = replacement;
+  }
+
+  this.setState(
+    {
+      urlArray: urlArray,
+      url: urlArray.join("")
+    });
 }
 
 getAllIndices(arr, val) {
@@ -130,12 +193,16 @@ getAllIndices(arr, val) {
 
   render() {
 
+    const url = this.state.url;
+    let title;
+    if (url !== "") {
+      title = <h1>Inputted URL</h1>
+    }
+
     return (
       <div>
         <div>
-        <h1>
-          URL: 
-        </h1>
+        {title}
         <a href={this.state.url}>{this.state.url}</a>
       </div>
       <div>
@@ -148,7 +215,6 @@ getAllIndices(arr, val) {
           <button className="flight-button" onClick={this.hotWire}>Hotwire URL</button>
           </div>
           </div>
-           <button onClick={this.findMacros}>Find Macros</button>
         {this.state.macroTitles}
       </div>
       </div>
